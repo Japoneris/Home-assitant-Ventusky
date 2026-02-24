@@ -1,12 +1,12 @@
 {
+  "domain": "ventusky",
+  "name": "Ventusky Weather",
   "codeowners": ["@japoneris"],
   "config_flow": true,
   "documentation": "https://github.com/Japoneris/Home-assitant-Ventusky",
-  "domain": "ventusky",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/Japoneris/Home-assitant-Ventusky/issues",
-  "name": "Ventusky Weather",
   "requirements": ["beautifulsoup4==4.12.3"],
   "version": "1.0.0"
 }
