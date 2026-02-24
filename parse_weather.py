@@ -5,10 +5,15 @@ Parse Ventusky weather HTML into structured JSON.
 The HTML embeds a JSON blob inside a <custom-forecast data-forecast='...'> element,
 covering 8 days × 8 time slots (01:00, 04:00, 07:00, 10:00, 13:00, 16:00, 19:00, 22:00).
 Dates are extracted from <select id="date_selector">.
+
+The <div id="forecast_24"> section contains hour-by-hour data for the next 24 hours,
+starting from the current hour.
 """
 
 import json
+import re
 import sys
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 
 TIME_SLOTS = ["01:00", "04:00", "07:00", "10:00", "13:00", "16:00", "19:00", "22:00"]
@@ -80,8 +85,96 @@ def parse_weather_html(html: str) -> dict:
             "precipitation": units.get("ws", "mm"),
             "wind_speed": units.get("s", "km/h"),
         },
+        "hourly_24h": _parse_hourly_24h(soup, date_map),
         "forecast": forecast_days,
     }
+
+
+def _parse_hourly_24h(soup: BeautifulSoup, date_map: dict) -> list:
+    """Parse the next-24-hours table from <div id='forecast_24'>."""
+    section = soup.find("div", id="forecast_24")
+    if not section:
+        return []
+
+    table = section.find("table")
+    if not table:
+        return []
+
+    # Derive today's date from d_1 (tomorrow) minus 1 day
+    today = None
+    tomorrow = None
+    if "d_1" in date_map:
+        tomorrow = datetime.strptime(date_map["d_1"], "%Y/%m/%d")
+        today = tomorrow - timedelta(days=1)
+
+    # Parse time headers; detect which slots belong to "tomorrow"
+    headers = []
+    for th in table.find("thead").find_all("th"):
+        time_str = th.get_text(separator=" ").strip()
+        is_tomorrow = "tomorrow" in time_str
+        hour = time_str.split()[0]  # e.g. "14:00"
+        date = tomorrow if is_tomorrow else today
+        headers.append({
+            "time": hour,
+            "date": date.strftime("%Y/%m/%d") if date else "unknown",
+        })
+
+    # Parse each cell in the single tbody row
+    row = table.find("tbody").find("tr")
+    cells = row.find_all("td")
+
+    slots = []
+    for i, td in enumerate(cells):
+        header = headers[i] if i < len(headers) else {"time": "??:??", "date": "unknown"}
+
+        img = td.find("img")
+        weather_desc = img["alt"] if img else "unknown"
+
+        temp_div = td.find("div", class_=re.compile(r"temperature_line"))
+        temp_text = temp_div.get_text(strip=True) if temp_div else ""
+        temp_c = int(re.search(r"-?\d+", temp_text).group()) if re.search(r"-?\d+", temp_text) else None
+
+        spans = td.find_all("span")
+        precip_mm = None
+        precip_pct = None
+        for span in spans:
+            text = span.get_text(strip=True)
+            if "mm" in text:
+                m = re.search(r"[\d.]+", text)
+                precip_mm = float(m.group()) if m else None
+            elif "%" in text:
+                m = re.search(r"\d+", text)
+                precip_pct = int(m.group()) if m else None
+
+        wind_div = td.find("div", class_=re.compile(r"wind_ico"))
+        wind_dir = wind_div.get_text(strip=True) if wind_div else None
+        wind_deg = None
+        if wind_div:
+            m = re.search(r"arrow_(\d+)", " ".join(wind_div.get("class", [])))
+            wind_deg = int(m.group(1)) if m else None
+
+        speed_divs = td.find_all("div")
+        wind_speed_kmh = None
+        for div in speed_divs:
+            text = div.get_text(strip=True)
+            if "km/h" in text:
+                m = re.search(r"\d+", text)
+                wind_speed_kmh = int(m.group()) if m else None
+                break
+
+        slots.append({
+            "date": header["date"],
+            "time": header["time"],
+            "weather_description": weather_desc,
+            "temperature_c": temp_c,
+            "precipitation_mm": precip_mm,
+            "precipitation_probability_pct": precip_pct,
+            "wind_direction": wind_dir,
+            "wind_direction_deg": wind_deg,
+            "wind_speed_kmh": wind_speed_kmh,
+        })
+
+    return slots
 
 
 def _extract_location(soup: BeautifulSoup) -> str:
