@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ventusky Weather",
+        "description": "Enter the coordinates and a name for this location.",
+        "data": {
+          "latitude": "Latitude",
+          "longitude": "Longitude",
+          "location_name": "Location name",
+          "refresh_interval": "Refresh interval (minutes)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to Ventusky. Check your internet connection.",
+      "parse_error": "Could not parse weather data from Ventusky."
+    },
+    "abort": {
+      "already_configured": "This location is already configured."
+    }
+  }
+}

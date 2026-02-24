@@ -1,8 +1,19 @@
-# Meteo Agricole
+# Ventusky Scrapper + Home Assistant Integration
+
 
 Tools to scrape and display weather forecast data from [Ventusky](https://www.ventusky.com).
 
+
 ## Files
+
+### Home Assistant
+
+Move the `venstusky` folder from `custom_components/` and `www/` to the correct config location.
+
+
+### Local
+
+In `local/` folder, to try if everything fine.
 
 | File | Role |
 |---|---|
@@ -51,7 +62,7 @@ python3 read_weather.py weather.json --field wind_speed_kmh
 
 ```json
 {
-  "location": "Sartrouville",
+  "location": "MyCityName",
   "units": {
     "temperature": "°C",
     "precipitation": "mm",

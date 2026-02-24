@@ -1,0 +1,1 @@
+The `ventusky/` folder should be put in `config/custom_components/`
