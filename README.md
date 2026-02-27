@@ -1,7 +1,11 @@
 # Ventusky Scrapper + Home Assistant Integration
 
+![](custom_components/ventusky/brand/icon.png)
 
 Tools to scrape and display weather forecast data from [Ventusky](https://www.ventusky.com).
+
+**Note**: we do not use any API, just scrapt the html web page. This is subject to failure.
+
 
 
 ## Files
