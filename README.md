@@ -2,104 +2,50 @@
 
 ![](custom_components/ventusky/brand/icon.png)
 
-Tools to scrape and display weather forecast data from [Ventusky](https://www.ventusky.com).
 
-**Note**: we do not use any API, just scrapt the html web page. This is subject to failure.
+This custom Home Assistant component lets you get current weather and forecast from [Ventusky](https://www.ventusky.com).
 
+The tool scrap the ventusky html web page, so you do not need any API key for configuring the component.
 
-
-## Files
-
-### Home Assistant
-
-Move the `venstusky` folder from `custom_components/` and `www/` to the correct config location.
+Because we scrap the webpage, the app can break at any time if the Ventusky UI is changed.
+Please let me know if you encounter any issue.
 
 
-### Local
+## Configuration
 
-In `local/` folder, to try if everything fine.
+First, you need to get this component refistered, either through HACS or by cloning this repo.
 
-| File | Role |
-|---|---|
-| `parse_weather.py` | Parses a Ventusky HTML page into a structured JSON file |
-| `read_weather.py` | Displays the JSON forecast in a human-readable table |
-| `test.html` | Sample HTML from Ventusky (Sartrouville, 8-day forecast) |
-| `weather.json` | Output of the parser |
+For local configuration, move the `custom_components/ventusky` in your Home assisitant `custom_components/` folder.
 
-## Setup
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install beautifulsoup4
-```
+## Addint a widget
 
-## Usage
+On your Home Assistant interfact, click on "Add a device". 
+Then search for "Ventusky Weather".
 
-### 1. Parse an HTML file
+You will be asked for 4 things:
 
-Save a Ventusky forecast page as an HTML file, then run:
+- longitude,
+- latitude,
+- place name (this in only for display)
+- refresh interval in minutes (By default, 60 minutes, but you can put less. Avoid refreshing too frequently to avoid any ban from the weather server).
 
-```bash
-python3 parse_weather.py test.html weather.json
-```
+**How to get your latitude/longitude?**
 
-Arguments:
-- `test.html` — input HTML file (default: `test.html`)
-- `weather.json` — output JSON file (default: `weather.json`)
+1. Go on the official [Ventusky Website](https://www.ventusky.com/)
+2. Search for your city
+3. Click on the map on the dot representing the city. You should have a right pannel with the forecast.
+4. On the URL, you should have two numbers, like `https://www.ventusky.com/<lat>;<long>`.
+5. Provide to the widget these values
 
-### 2. Read the forecast
+Then, validate. The widget is configured.
 
-```bash
-# Full 8-day forecast
-python3 read_weather.py weather.json
+## Lovelace Card
 
-# Single day
-python3 read_weather.py weather.json --day 2026/02/25
+To setup the lovelace card, please have a look at [INSTALL.md](INSTALL.md)
 
-# Single field across all days
-python3 read_weather.py weather.json --field temperature_c
-python3 read_weather.py weather.json --field wind_speed_kmh
-```
 
-## JSON Format
+## Customization
 
-```json
-{
-  "location": "MyCityName",
-  "units": {
-    "temperature": "°C",
-    "precipitation": "mm",
-    "wind_speed": "km/h"
-  },
-  "forecast": [
-    {
-      "day": "d_1",
-      "date": "2026/02/25",
-      "hourly": [
-        {
-          "time": "01:00",
-          "temperature_c": 10,
-          "weather_code": -2,
-          "weather_description": "clear sky with few clouds",
-          "is_night": true,
-          "precipitation_mm": 0,
-          "precipitation_probability_pct": 0,
-          "wind_speed_kmh": 5,
-          "wind_gust_kmh": 11,
-          "wind_direction_deg": 90,
-          "wind_direction": "E"
-        }
-      ]
-    }
-  ]
-}
-```
+If you want to customize this app, please have a look at the [local](local/readme.md) folder, where you have the raw scripts extracting the information from the webpage.
 
-**8 days of data, 8 time slots per day:** 01:00, 04:00, 07:00, 10:00, 13:00, 16:00, 19:00, 22:00.
-
-**Weather codes:** positive = daytime, negative = nighttime variant of the same condition (`is_night: true`).
-
-## How It Works
-
-Ventusky embeds all forecast data as a JSON blob in a `<custom-forecast data-forecast='...'>` HTML element. The parser extracts this directly — no fragile DOM scraping needed. Dates are read from a `<select id="date_selector">` dropdown.
